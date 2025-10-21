@@ -13,7 +13,8 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "vllm"
+
+name = "vllm-steer"
 authors = [{name = "vLLM Team"}]
 license = "Apache-2.0"
 license-files = ["LICENSE"]
@@ -39,17 +40,17 @@ Documentation="https://docs.vllm.ai/en/latest/"
 Slack="https://slack.vllm.ai/"
 
 [project.scripts]
-vllm = "vllm.entrypoints.cli.main:main"
+vllm = "vllm_steer.entrypoints.cli.main:main"
 
 [project.entry-points."vllm.general_plugins"]
-lora_filesystem_resolver = "vllm.plugins.lora_resolvers.filesystem_resolver:register_filesystem_resolver"
+lora_filesystem_resolver = "vllm_steer.plugins.lora_resolvers.filesystem_resolver:register_filesystem_resolver"
 
 [tool.setuptools_scm]
 # no extra settings needed, presence enables setuptools-scm
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["vllm*"]
+include = ["vllm_steer*"]
 
 [tool.yapfignore]
 ignore_patterns = [
@@ -64,19 +65,19 @@ ignore_patterns = [
 line-length = 80
 
 [tool.ruff.lint.per-file-ignores]
-"vllm/third_party/**" = ["ALL"]
-"vllm/version.py" = ["F401"]
-"vllm/_version.py" = ["ALL"]
+"vllm_steer/third_party/**" = ["ALL"]
+"vllm_steer/version.py" = ["F401"]
+"vllm_steer/_version.py" = ["ALL"]
 # Python 3.8 typing - skip V0 code
-"vllm/attention/**/*.py" = ["UP006", "UP035"]
-"vllm/core/**/*.py" = ["UP006", "UP035"]
-"vllm/engine/**/*.py" = ["UP006", "UP035"]
-"vllm/executor/**/*.py" = ["UP006", "UP035"]
-"vllm/prompt_adapter/**/*.py" = ["UP006", "UP035"]
-"vllm/spec_decode/**/*.py" = ["UP006", "UP035"]
-"vllm/worker/**/*.py" = ["UP006", "UP035"]
+"vllm_steer/attention/**/*.py" = ["UP006", "UP035"]
+"vllm_steer/core/**/*.py" = ["UP006", "UP035"]
+"vllm_steer/engine/**/*.py" = ["UP006", "UP035"]
+"vllm_steer/executor/**/*.py" = ["UP006", "UP035"]
+"vllm_steer/prompt_adapter/**/*.py" = ["UP006", "UP035"]
+"vllm_steer/spec_decode/**/*.py" = ["UP006", "UP035"]
+"vllm_steer/worker/**/*.py" = ["UP006", "UP035"]
 # Python 3.8 typing - skip utils for ROCm
-"vllm/utils/__init__.py" = ["UP006", "UP035"]
+"vllm_steer/utils/__init__.py" = ["UP006", "UP035"]
 
 [tool.ruff.lint]
 select = [
@@ -116,26 +117,31 @@ follow_imports = "silent"
 
 # After fixing type errors resulting from follow_imports: "skip" -> "silent",
 # move the directory here and remove it from tools/mypy.sh
+
 files = [
-    "vllm/*.py",
-    "vllm/adapter_commons",
-    "vllm/assets",
-    "vllm/entrypoints",
-    "vllm/core",
-    "vllm/inputs",
-    "vllm/logging_utils",
-    "vllm/multimodal",
-    "vllm/platforms",
-    "vllm/transformers_utils",
-    "vllm/triton_utils",
-    "vllm/usage",
+    "vllm_steer/*.py",
+    "vllm_steer/adapter_commons",
+    "vllm_steer/assets",
+    "vllm_steer/entrypoints",
+    "vllm_steer/core",
+    "vllm_steer/inputs",
+    "vllm_steer/logging_utils",
+    "vllm_steer/multimodal",
+    "vllm_steer/platforms",
+    "vllm_steer/transformers_utils",
+    "vllm_steer/triton_utils",
+    "vllm_steer/usage",
 ]
+
+
 # TODO(woosuk): Include the code from Megatron and HuggingFace.
 exclude = [
-    "vllm/model_executor/parallel_utils/|vllm/model_executor/models/",
+    "vllm_steer/model_executor/parallel_utils/|vllm_steer/model_executor/models/",
     # Ignore triton kernels in ops.
-    'vllm/attention/ops/.*\.py$'
+    'vllm_steer/attention/ops/.*\.py$'
 ]
+
+
 
 [tool.isort]
 skip_glob = [
@@ -169,7 +175,7 @@ plugins.md046.enabled = false # code-block-style
 plugins.md024.allow_different_nesting = true # no-duplicate-headers
 
 [tool.ty.src]
-root = "./vllm"
+root = "./vllm_steer"
 respect-ignore-files = true
 
 [tool.ty.environment]

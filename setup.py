@@ -33,7 +33,9 @@ logger = logging.getLogger(__name__)
 
 # cannot import envs directly because it depends on vllm,
 #  which is not installed yet
-envs = load_module_from_path('envs', os.path.join(ROOT_DIR, 'vllm', 'envs.py'))
+# TODO: change vllm to vllm_steer
+# envs = load_module_from_path('envs', os.path.join(ROOT_DIR, 'vllm', 'envs.py'))
+envs = load_module_from_path('envs', os.path.join(ROOT_DIR, 'vllm_steer', 'envs.py'))
 
 VLLM_TARGET_DEVICE = envs.VLLM_TARGET_DEVICE
 
@@ -270,12 +272,19 @@ class cmake_build_ext(build_ext):
         # copy vllm/vllm_flash_attn/**/*.py from self.build_lib to current
         # directory so that they can be included in the editable build
         import glob
-        files = glob.glob(os.path.join(self.build_lib, "vllm",
+        # files = glob.glob(os.path.join(self.build_lib, "vllm",
+        #                                "vllm_flash_attn", "**", "*.py"),
+        #                   recursive=True)
+        # TODO: change vllm to vllm_steer
+        files = glob.glob(os.path.join(self.build_lib, "vllm_steer",
                                        "vllm_flash_attn", "**", "*.py"),
                           recursive=True)
         for file in files:
-            dst_file = os.path.join("vllm/vllm_flash_attn",
-                                    file.split("vllm/vllm_flash_attn/")[-1])
+            # dst_file = os.path.join("vllm/vllm_flash_attn",
+            #                         file.split("vllm/vllm_flash_attn/")[-1])
+            # TODO: change vllm to vllm_steer
+            dst_file = os.path.join("vllm_steer/vllm_flash_attn",
+                                    file.split("vllm_steer/vllm_flash_attn/")[-1])
             print(f"Copying {file} to {dst_file}")
             os.makedirs(os.path.dirname(dst_file), exist_ok=True)
             self.copy_file(file, dst_file)
@@ -371,14 +380,24 @@ class repackage_wheel(build_ext):
                     f"Failed to get vLLM wheel from {wheel_location}") from e
 
         with zipfile.ZipFile(wheel_path) as wheel:
+            # files_to_copy = [
+            #     "vllm/_C.abi3.so",
+            #     "vllm/_moe_C.abi3.so",
+            #     "vllm/_flashmla_C.abi3.so",
+            #     "vllm/vllm_flash_attn/_vllm_fa2_C.abi3.so",
+            #     "vllm/vllm_flash_attn/_vllm_fa3_C.abi3.so",
+            #     "vllm/cumem_allocator.abi3.so",
+            #     # "vllm/_version.py", # not available in nightly wheels yet
+            # ]
+            # TODO: change vllm to vllm_steer
             files_to_copy = [
-                "vllm/_C.abi3.so",
-                "vllm/_moe_C.abi3.so",
-                "vllm/_flashmla_C.abi3.so",
-                "vllm/vllm_flash_attn/_vllm_fa2_C.abi3.so",
-                "vllm/vllm_flash_attn/_vllm_fa3_C.abi3.so",
-                "vllm/cumem_allocator.abi3.so",
-                # "vllm/_version.py", # not available in nightly wheels yet
+                "vllm_steer/_C.abi3.so",
+                "vllm_steer/_moe_C.abi3.so",
+                "vllm_steer/_flashmla_C.abi3.so",
+                "vllm_steer/vllm_flash_attn/_vllm_fa2_C.abi3.so",
+                "vllm_steer/vllm_flash_attn/_vllm_fa3_C.abi3.so",
+                "vllm_steer/cumem_allocator.abi3.so",
+                # "vllm_steer/_version.py", # not available in nightly wheels yet
             ]
 
             file_members = list(
@@ -387,8 +406,11 @@ class repackage_wheel(build_ext):
             # vllm_flash_attn python code:
             # Regex from
             #  `glob.translate('vllm/vllm_flash_attn/**/*.py', recursive=True)`
+            # compiled_regex = re.compile(
+            #     r"vllm/vllm_flash_attn/(?:[^/.][^/]*/)*(?!\.)[^/]*\.py")
+            # TODO: change vllm to vllm_steer
             compiled_regex = re.compile(
-                r"vllm/vllm_flash_attn/(?:[^/.][^/]*/)*(?!\.)[^/]*\.py")
+                r"vllm_steer/vllm_flash_attn/(?:[^/.][^/]*/)*(?!\.)[^/]*\.py")
             file_members += list(
                 filter(lambda x: compiled_regex.match(x.filename),
                        wheel.filelist))
@@ -546,7 +568,9 @@ def get_gaudi_sw_version():
 
 
 def get_vllm_version() -> str:
-    version = get_version(write_to="vllm/_version.py")
+    # TODO: change vllm to vllm_steer
+    # version = get_version(write_to="vllm/_version.py")
+    version = get_version(write_to="vllm_steer/_version.py")
     sep = "+" if "+" not in version else "."  # dev versions might contain +
 
     if _no_device():
@@ -642,29 +666,61 @@ def get_requirements() -> list[str]:
 
 ext_modules = []
 
+# if _is_cuda() or _is_hip():
+#     ext_modules.append(CMakeExtension(name="vllm._moe_C"))
+
+# if _is_hip():
+#     ext_modules.append(CMakeExtension(name="vllm._rocm_C"))
+
+# if _is_cuda():
+#     ext_modules.append(CMakeExtension(name="vllm.vllm_flash_attn._vllm_fa2_C"))
+#     if envs.VLLM_USE_PRECOMPILED or get_nvcc_cuda_version() >= Version("12.3"):
+#         # FA3 requires CUDA 12.3 or later
+#         ext_modules.append(
+#             CMakeExtension(name="vllm.vllm_flash_attn._vllm_fa3_C"))
+#         # Optional since this doesn't get built (produce an .so file) when
+#         # not targeting a hopper system
+#         ext_modules.append(
+#             CMakeExtension(name="vllm._flashmla_C", optional=True))
+#     ext_modules.append(CMakeExtension(name="vllm.cumem_allocator"))
+
+# if _build_custom_ops():
+#     ext_modules.append(CMakeExtension(name="vllm._C"))
+
+# TODO: change vllm to vllm_steer
 if _is_cuda() or _is_hip():
-    ext_modules.append(CMakeExtension(name="vllm._moe_C"))
+    ext_modules.append(CMakeExtension(name="vllm_steer._moe_C"))
 
 if _is_hip():
-    ext_modules.append(CMakeExtension(name="vllm._rocm_C"))
+    ext_modules.append(CMakeExtension(name="vllm_steer._rocm_C"))
 
 if _is_cuda():
-    ext_modules.append(CMakeExtension(name="vllm.vllm_flash_attn._vllm_fa2_C"))
+    ext_modules.append(CMakeExtension(name="vllm_steer.vllm_flash_attn._vllm_fa2_C"))
     if envs.VLLM_USE_PRECOMPILED or get_nvcc_cuda_version() >= Version("12.3"):
         # FA3 requires CUDA 12.3 or later
         ext_modules.append(
-            CMakeExtension(name="vllm.vllm_flash_attn._vllm_fa3_C"))
+            CMakeExtension(name="vllm_steer.vllm_flash_attn._vllm_fa3_C"))
         # Optional since this doesn't get built (produce an .so file) when
         # not targeting a hopper system
         ext_modules.append(
-            CMakeExtension(name="vllm._flashmla_C", optional=True))
-    ext_modules.append(CMakeExtension(name="vllm.cumem_allocator"))
+            CMakeExtension(name="vllm_steer._flashmla_C", optional=True))
+    ext_modules.append(CMakeExtension(name="vllm_steer.cumem_allocator"))
 
 if _build_custom_ops():
-    ext_modules.append(CMakeExtension(name="vllm._C"))
+    ext_modules.append(CMakeExtension(name="vllm_steer._C"))
 
+
+
+# package_data = {
+#     "vllm": [
+#         "py.typed",
+#         "model_executor/layers/fused_moe/configs/*.json",
+#         "model_executor/layers/quantization/utils/configs/*.json",
+#     ]
+# }
+# TODO: change vllm to vllm_steer
 package_data = {
-    "vllm": [
+    "vllm_steer": [
         "py.typed",
         "model_executor/layers/fused_moe/configs/*.json",
         "model_executor/layers/quantization/utils/configs/*.json",
@@ -683,6 +739,7 @@ else:
     }
 
 setup(
+    name="vllm-steer", # this is the name of the package, vllm_steer, not vllm
     # static metadata should rather go in pyproject.toml
     version=get_vllm_version(),
     ext_modules=ext_modules,
